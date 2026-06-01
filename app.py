@@ -132,7 +132,7 @@ def parse_expense():
 
     try:
         response = gemini_client.models.generate_content(
-            model="gemini-2.0-flash", contents=prompt
+            model="gemini-2.5-flash", contents=prompt
         )
         raw = response.text.strip()
         raw = re.sub(r"^```(?:json)?\n?", "", raw)

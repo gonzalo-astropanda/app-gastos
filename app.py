@@ -120,6 +120,16 @@ Reglas:
 def index():
     return send_from_directory("static", "index.html")
 
+@app.route("/favicon.ico")
+def favicon():
+    return send_from_directory("static", "icon-192.png", mimetype="image/png")
+
+@app.route("/config")
+def config():
+    return jsonify({
+        "sheet_url": f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit"
+    })
+
 @app.route("/parse", methods=["POST"])
 def parse_expense():
     data = request.get_json()

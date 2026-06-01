@@ -8,6 +8,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Gastos">
   <title>Control de Gastos</title>
+  <link rel="icon" type="image/png" href="/icon-192.png">
+  <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -54,6 +56,23 @@
     }
     .header h1 { font-size: 22px; font-weight: 700; }
     .header .date { font-size: 13px; color: var(--text2); }
+    .header .right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+    .sheet-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 50px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent2);
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .sheet-link:active { transform: scale(0.95); }
+    .sheet-link svg { width: 14px; height: 14px; }
 
     /* ── Main input area ── */
     .main {
@@ -301,7 +320,15 @@
     <div>
       <h1>💸 Gastos</h1>
     </div>
-    <div class="date" id="dateLabel"></div>
+    <div class="right">
+      <a class="sheet-link" id="sheetLink" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 16H5V5h14v14zM7 7h4v4H7V7zm0 6h4v4H7v-4zm6-6h4v4h-4V7zm0 6h4v4h-4v-4z"/>
+        </svg>
+        Ver Sheet
+      </a>
+      <div class="date" id="dateLabel"></div>
+    </div>
   </div>
 
   <div class="main">
@@ -405,6 +432,11 @@ let recentItems = JSON.parse(localStorage.getItem("recents") || "[]");
 const now = new Date();
 document.getElementById("dateLabel").textContent =
   now.toLocaleDateString("es-AR", {weekday:"long", day:"numeric", month:"long"});
+
+// Load sheet link
+fetch("/config").then(r => r.json()).then(c => {
+  if (c.sheet_url) document.getElementById("sheetLink").href = c.sheet_url;
+}).catch(() => {});
 
 // Recent list
 function renderRecents() {

@@ -1,4 +1,4 @@
-import os, json, re
+import os, json, re, traceback
 from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory
 from dotenv import load_dotenv
@@ -9,6 +9,7 @@ from googleapiclient.discovery import build
 load_dotenv()
 
 app = Flask(__name__, static_folder="static", static_url_path="")
+app.logger.setLevel("DEBUG")
 
 gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
@@ -139,7 +140,9 @@ def parse_expense():
         expense = json.loads(raw)
         return jsonify({"ok": True, "expense": expense})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        tb = traceback.format_exc()
+        app.logger.error(tb)
+        return jsonify({"error": str(e), "trace": tb}), 500
 
 @app.route("/save", methods=["POST"])
 def save_expense():

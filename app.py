@@ -1,4 +1,4 @@
-import os, json, re, traceback
+import os, json, re, traceback, time, urllib.request
 from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory
 from dotenv import load_dotenv
@@ -29,6 +29,20 @@ CATEGORIAS = {
     "Trabajo":      ["Software","Hardware","Coworking","Capacitación"],
     "Otro":         ["Regalo","Donación","Impuestos","Otro"],
 }
+
+# ── Cotización del dólar (blue) con cache de 1 hora ──
+DOLAR_URL = "https://dolarapi.com/v1/dolares/blue"
+_dolar_cache = {"rate": None, "ts": 0, "fecha": None}
+
+def get_dolar_blue():
+    now = time.time()
+    if _dolar_cache["rate"] and (now - _dolar_cache["ts"]) < 3600:
+        return _dolar_cache["rate"], _dolar_cache["fecha"]
+    with urllib.request.urlopen(DOLAR_URL, timeout=10) as resp:
+        data = json.loads(resp.read().decode())
+    rate = float(data["venta"])
+    _dolar_cache.update(rate=rate, ts=now, fecha=data.get("fechaActualizacion"))
+    return rate, _dolar_cache["fecha"]
 
 def get_sheets_service():
     creds_json = os.getenv("GOOGLE_CREDENTIALS_JSON")
@@ -103,6 +117,7 @@ Extraé los datos y devolvé SOLO un JSON válido con esta estructura exacta:
   "fecha": "DD/MM/YYYY",
   "descripcion": "texto descriptivo breve",
   "monto": 1234,
+  "moneda": "ARS o USD",
   "categoria": "una de: Alimentación, Transporte, Entretenimiento, Salud, Ropa, Hogar, Trabajo, Otro",
   "tipo": "subtipo específico",
   "nota": "detalle extra si hay, sino vacío"
@@ -111,7 +126,8 @@ Extraé los datos y devolvé SOLO un JSON válido con esta estructura exacta:
 Reglas:
 - Si no menciona fecha, usá hoy: {today}
 - Si dice "ayer" restá 1 día, "el lunes" calculá el lunes más reciente, etc.
-- El monto debe ser un número sin símbolos
+- El monto debe ser un número sin símbolos, en la moneda original que dijo el usuario
+- "moneda" es USD si menciona dólares, dolares, usd, u$s, o "verdes"; en cualquier otro caso es ARS
 - La categoría debe ser exactamente una de las listadas
 - El tipo debe ser específico (Supermercado, Uber, Netflix, etc.)
 - No incluyas nada más que el JSON"""
@@ -148,6 +164,18 @@ def parse_expense():
         raw = re.sub(r"^```(?:json)?\n?", "", raw)
         raw = re.sub(r"\n?```$", "", raw)
         expense = json.loads(raw)
+
+        # Conversión USD -> ARS con dólar blue
+        if str(expense.get("moneda", "ARS")).upper() == "USD":
+            usd = float(expense["monto"])
+            rate, _ = get_dolar_blue()
+            ars = round(usd * rate)
+            extra = f"USD {usd:g} @ ${rate:g} (blue)"
+            expense["monto"] = ars
+            expense["nota"] = (expense.get("nota", "") + " · " + extra).strip(" ·")
+            expense["conversion"] = {"usd": usd, "rate": rate, "ars": ars}
+        expense["moneda"] = "ARS"
+
         return jsonify({"ok": True, "expense": expense})
     except Exception as e:
         tb = traceback.format_exc()

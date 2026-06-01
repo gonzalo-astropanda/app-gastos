@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#2D3748">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Gastos">
+  <title>Control de Gastos</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #1a202c;
+      --surface: #2d3748;
+      --surface2: #3a4a5c;
+      --accent: #4a90e2;
+      --accent2: #63b3ed;
+      --success: #48bb78;
+      --danger: #fc8181;
+      --text: #f7fafc;
+      --text2: #a0aec0;
+      --border: #4a5568;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 20px 20px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .header h1 { font-size: 22px; font-weight: 700; }
+    .header .date { font-size: 13px; color: var(--text2); }
+
+    /* ── Main input area ── */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 20px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ── Input card ── */
+    .input-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .input-card label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 10px;
+    }
+    textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 16px;
+      line-height: 1.5;
+      padding: 14px;
+      resize: none;
+      height: 90px;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    textarea:focus { border-color: var(--accent); }
+    textarea::placeholder { color: var(--text2); }
+
+    /* ── Buttons row ── */
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .btn {
+      flex: 1;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-mic {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1.5px solid var(--border);
+    }
+    .btn-mic.recording {
+      background: #e53e3e22;
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+    .btn-parse {
+      background: var(--accent);
+      color: white;
+    }
+    .btn-parse:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* ── Preview card ── */
+    .preview-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: none;
+      border: 1.5px solid var(--accent);
+    }
+    .preview-card.visible { display: block; }
+
+    .preview-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 14px;
+    }
+
+    .expense-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .expense-grid .full { grid-column: 1 / -1; }
+
+    .field {
+      background: var(--surface2);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+    }
+    .field-label {
+      font-size: 10px;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 4px;
+    }
+    .field-val {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .field-val.monto {
+      font-size: 22px;
+      color: var(--accent2);
+    }
+    .field-val input, .field-val select {
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px solid var(--border);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      width: 100%;
+      padding: 2px 0;
+      outline: none;
+    }
+    .field-val select { cursor: pointer; }
+    .field-val select option { background: var(--surface2); }
+
+    .confirm-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .btn-cancel {
+      background: transparent;
+      color: var(--text2);
+      border: 1.5px solid var(--border);
+    }
+    .btn-save {
+      background: var(--success);
+      color: white;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 50px;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { border-color: var(--success); color: var(--success); }
+    .toast.error { border-color: var(--danger); color: var(--danger); }
+
+    /* ── Loading spinner ── */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: none;
+    }
+    .spinner.visible { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Pulse for mic ── */
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(252,129,129,0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(252,129,129,0); }
+    }
+    .btn-mic.recording { animation: pulse 1.2s ease infinite; }
+
+    /* ── Recent section ── */
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    .recent-list { display: flex; flex-direction: column; gap: 8px; }
+    .recent-item {
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .recent-item-left { flex: 1; }
+    .recent-item-desc { font-size: 14px; font-weight: 500; }
+    .recent-item-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+    .recent-item-amount {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent2);
+      margin-left: 12px;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--text2);
+      font-size: 14px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div>
+      <h1>💸 Gastos</h1>
+    </div>
+    <div class="date" id="dateLabel"></div>
+  </div>
+
+  <div class="main">
+    <!-- Input card -->
+    <div class="input-card">
+      <label>¿Qué gastaste?</label>
+      <textarea id="inputText" placeholder="Ej: &quot;Gasté 2500 en el super&quot; o &quot;Almuerzo 1800 en el centro&quot;"></textarea>
+      <div class="btn-row">
+        <button class="btn btn-mic" id="btnMic">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3zm7 9a1 1 0 0 1 2 0 9 9 0 0 1-8 8.94V22h3a1 1 0 0 1 0 2H8a1 1 0 0 1 0-2h3v-2.06A9 9 0 0 1 3 11a1 1 0 0 1 2 0 7 7 0 0 0 14 0z"/>
+          </svg>
+          <span id="micLabel">Micrófono</span>
+        </button>
+        <button class="btn btn-parse" id="btnParse">
+          <div class="spinner" id="parseSpinner"></div>
+          <span id="parseLabel">Registrar</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Preview / edit card -->
+    <div class="preview-card" id="previewCard">
+      <div class="preview-title">✦ Confirmá el gasto</div>
+      <div class="expense-grid">
+        <div class="field">
+          <div class="field-label">Monto</div>
+          <div class="field-val monto">$<span id="fMonto">0</span></div>
+        </div>
+        <div class="field">
+          <div class="field-label">Fecha</div>
+          <div class="field-val"><input type="text" id="fFecha" placeholder="DD/MM/YYYY"></div>
+        </div>
+        <div class="field full">
+          <div class="field-label">Descripción</div>
+          <div class="field-val"><input type="text" id="fDesc" placeholder="Descripción"></div>
+        </div>
+        <div class="field">
+          <div class="field-label">Categoría</div>
+          <div class="field-val">
+            <select id="fCat" onchange="updateTipos()">
+              <option>Alimentación</option>
+              <option>Transporte</option>
+              <option>Entretenimiento</option>
+              <option>Salud</option>
+              <option>Ropa</option>
+              <option>Hogar</option>
+              <option>Trabajo</option>
+              <option>Otro</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Tipo</div>
+          <div class="field-val">
+            <select id="fTipo"></select>
+          </div>
+        </div>
+        <div class="field full">
+          <div class="field-label">Nota (opcional)</div>
+          <div class="field-val"><input type="text" id="fNota" placeholder="—"></div>
+        </div>
+      </div>
+      <div class="confirm-row">
+        <button class="btn btn-cancel" id="btnCancel">Cancelar</button>
+        <button class="btn btn-save" id="btnSave">
+          <div class="spinner" id="saveSpinner"></div>
+          <span id="saveLabel">Guardar</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Recent -->
+    <div class="section-label">Recientes</div>
+    <div class="recent-list" id="recentList">
+      <div class="empty-state">Los gastos que registres aparecerán acá</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CATEGORIAS = {
+  "Alimentación": ["Supermercado","Restaurante","Delivery","Cafetería","Kiosco"],
+  "Transporte":   ["Uber","Taxi","SUBE","Combustible","Peaje","Estacionamiento"],
+  "Entretenimiento": ["Streaming","Cine","Salidas","Juegos","Libros"],
+  "Salud":        ["Farmacia","Médico","Gimnasio","Óptica"],
+  "Ropa":         ["Ropa","Calzado","Accesorios"],
+  "Hogar":        ["Alquiler","Expensas","Servicios","Limpieza","Muebles"],
+  "Trabajo":      ["Software","Hardware","Coworking","Capacitación"],
+  "Otro":         ["Regalo","Donación","Impuestos","Otro"],
+};
+
+let currentExpense = null;
+let recognition = null;
+let isRecording = false;
+let recentItems = JSON.parse(localStorage.getItem("recents") || "[]");
+
+// Date label
+const now = new Date();
+document.getElementById("dateLabel").textContent =
+  now.toLocaleDateString("es-AR", {weekday:"long", day:"numeric", month:"long"});
+
+// Recent list
+function renderRecents() {
+  const list = document.getElementById("recentList");
+  if (!recentItems.length) {
+    list.innerHTML = '<div class="empty-state">Los gastos que registres aparecerán acá</div>';
+    return;
+  }
+  list.innerHTML = recentItems.slice(-5).reverse().map(item => `
+    <div class="recent-item">
+      <div class="recent-item-left">
+        <div class="recent-item-desc">${item.descripcion}</div>
+        <div class="recent-item-meta">${item.categoria} · ${item.fecha}</div>
+      </div>
+      <div class="recent-item-amount">$${Number(item.monto).toLocaleString("es-AR")}</div>
+    </div>
+  `).join("");
+}
+renderRecents();
+
+// Tipos dropdown
+function updateTipos(selected) {
+  const cat = document.getElementById("fCat").value;
+  const tipos = CATEGORIAS[cat] || ["Otro"];
+  const sel = document.getElementById("fTipo");
+  sel.innerHTML = tipos.map(t => `<option${t===selected?" selected":""}>${t}</option>`).join("");
+}
+
+// Toast
+let toastTimer;
+function showToast(msg, type="") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+// Voice
+function initVoice() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return null;
+  const r = new SpeechRecognition();
+  r.lang = "es-AR";
+  r.continuous = false;
+  r.interimResults = false;
+  r.onresult = e => {
+    document.getElementById("inputText").value = e.results[0][0].transcript;
+    stopRecording();
+    parseSend();
+  };
+  r.onerror = () => stopRecording();
+  r.onend = () => stopRecording();
+  return r;
+}
+
+function stopRecording() {
+  isRecording = false;
+  const btn = document.getElementById("btnMic");
+  btn.classList.remove("recording");
+  document.getElementById("micLabel").textContent = "Micrófono";
+}
+
+document.getElementById("btnMic").addEventListener("click", () => {
+  if (isRecording) {
+    recognition?.stop();
+    stopRecording();
+    return;
+  }
+  if (!recognition) recognition = initVoice();
+  if (!recognition) { showToast("Micrófono no disponible", "error"); return; }
+  isRecording = true;
+  document.getElementById("btnMic").classList.add("recording");
+  document.getElementById("micLabel").textContent = "Escuchando…";
+  document.getElementById("inputText").value = "";
+  recognition.start();
+});
+
+// Parse
+async function parseSend() {
+  const text = document.getElementById("inputText").value.trim();
+  if (!text) { showToast("Escribí o dictá un gasto", "error"); return; }
+
+  const btn = document.getElementById("btnParse");
+  btn.disabled = true;
+  document.getElementById("parseSpinner").classList.add("visible");
+  document.getElementById("parseLabel").textContent = "Procesando…";
+
+  try {
+    const res = await fetch("/parse", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({text})
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error);
+
+    currentExpense = data.expense;
+    showPreview(currentExpense);
+  } catch(e) {
+    showToast("Error al procesar: " + e.message, "error");
+  } finally {
+    btn.disabled = false;
+    document.getElementById("parseSpinner").classList.remove("visible");
+    document.getElementById("parseLabel").textContent = "Registrar";
+  }
+}
+
+document.getElementById("btnParse").addEventListener("click", parseSend);
+
+document.getElementById("inputText").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); parseSend(); }
+});
+
+// Preview
+function showPreview(exp) {
+  document.getElementById("fMonto").textContent = Number(exp.monto).toLocaleString("es-AR");
+  document.getElementById("fFecha").value = exp.fecha || "";
+  document.getElementById("fDesc").value = exp.descripcion || "";
+  document.getElementById("fNota").value = exp.nota || "";
+  document.getElementById("fCat").value = exp.categoria || "Otro";
+  updateTipos(exp.tipo);
+
+  document.getElementById("previewCard").classList.add("visible");
+  document.getElementById("previewCard").scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+
+function hidePreview() {
+  document.getElementById("previewCard").classList.remove("visible");
+  currentExpense = null;
+}
+
+document.getElementById("btnCancel").addEventListener("click", hidePreview);
+
+// Save
+document.getElementById("btnSave").addEventListener("click", async () => {
+  const expense = {
+    fecha: document.getElementById("fFecha").value,
+    descripcion: document.getElementById("fDesc").value,
+    monto: parseFloat(document.getElementById("fMonto").textContent.replace(/\./g,"").replace(",",".")),
+    categoria: document.getElementById("fCat").value,
+    tipo: document.getElementById("fTipo").value,
+    nota: document.getElementById("fNota").value,
+  };
+
+  document.getElementById("btnSave").disabled = true;
+  document.getElementById("saveSpinner").classList.add("visible");
+  document.getElementById("saveLabel").textContent = "Guardando…";
+
+  try {
+    const res = await fetch("/save", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({expense})
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error);
+
+    recentItems.push(expense);
+    if (recentItems.length > 20) recentItems = recentItems.slice(-20);
+    localStorage.setItem("recents", JSON.stringify(recentItems));
+    renderRecents();
+
+    document.getElementById("inputText").value = "";
+    hidePreview();
+    showToast("✓ Guardado en " + data.sheet, "success");
+  } catch(e) {
+    showToast("Error al guardar: " + e.message, "error");
+  } finally {
+    document.getElementById("btnSave").disabled = false;
+    document.getElementById("saveSpinner").classList.remove("visible");
+    document.getElementById("saveLabel").textContent = "Guardar";
+  }
+});
+
+// Service Worker
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js").catch(() => {});
+}
+</script>
+</body>
+</html>

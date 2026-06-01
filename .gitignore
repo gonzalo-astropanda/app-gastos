@@ -1,0 +1,8 @@
+.env
+credentials.json
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+generate_icons.py
+create_sheet.py

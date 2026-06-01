@@ -38,7 +38,8 @@ def get_dolar_blue():
     now = time.time()
     if _dolar_cache["rate"] and (now - _dolar_cache["ts"]) < 3600:
         return _dolar_cache["rate"], _dolar_cache["fecha"]
-    with urllib.request.urlopen(DOLAR_URL, timeout=10) as resp:
+    req = urllib.request.Request(DOLAR_URL, headers={"User-Agent": "Mozilla/5.0 (gastos-app)"})
+    with urllib.request.urlopen(req, timeout=10) as resp:
         data = json.loads(resp.read().decode())
     rate = float(data["venta"])
     _dolar_cache.update(rate=rate, ts=now, fecha=data.get("fechaActualizacion"))

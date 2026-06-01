@@ -74,6 +74,14 @@ def get_or_create_month_sheet(service, year, month):
             body={"values": headers}
         ).execute()
 
+    # Total del mes en celda fija (H1/I1), fuera del rango de carga A:F
+    service.spreadsheets().values().update(
+        spreadsheetId=SHEET_ID,
+        range=f"'{sheet_name}'!H1:I1",
+        valueInputOption="USER_ENTERED",
+        body={"values": [["TOTAL del mes", "=SUM(C2:C)"]]}
+    ).execute()
+
     return sheet_name
 
 def append_expense(expense):
